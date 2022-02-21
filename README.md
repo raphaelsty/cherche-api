@@ -1,7 +1,7 @@
-# Deploy-Cherche
+# Cherche API
 
-`deploy-search` is dedicated to deploying our neural search pipeline using [FastAPI](https://fastapi.tiangolo.com) and
-[Docker](https://docs.docker.com/get-docker/). The `deploy-search` API has two routes: `/search/`
+`cherche-api` is dedicated to deploying our neural search pipeline using [FastAPI](https://fastapi.tiangolo.com) and
+[Docker](https://docs.docker.com/get-docker/). This API has two routes: `/search/`
 which enables the neural search pipeline to be called and an `/upload/` route which allows to
 update the pipeline and or the set of indexed documents.
 
@@ -12,8 +12,8 @@ update the pipeline and or the set of indexed documents.
 The first step is to clone the repository. Then we can build the container and launch it.
 
 ```sh
-git clone https://github.com/raphaelsty/deploy-cherche.git
-cd deploy-cherche
+git clone https://github.com/raphaelsty/cherche-api.git
+cd cherche-api
 ```
 
 ### Export our neural search pipeline

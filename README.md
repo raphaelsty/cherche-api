@@ -1,6 +1,7 @@
-# Cherche API
+# Deploy-Cherche
 
-`deploy-search` is dedicated to deploying a Cherche API easily.
+`deploy-search` is dedicated to deploying our neural search pipeline using
+[Docker](https://docs.docker.com/get-docker/) and [FastAPI](https://fastapi.tiangolo.com).
 
 ## Quick Start
 
@@ -13,12 +14,15 @@ git clone https://github.com/raphaelsty/deploy-cherche.git
 cd deploy-cherche
 ```
 
-### Serialize
+### Export our neural search pipeline
+
+To deploy Cherche we will first have to define a neural search pipeline and dump it in the `model` folder with the name `model.pkl`.
 
 ```python
 >>> from cherche import retrieve, rank, data
 >>> from sentence_transformers import SentenceTransformer
 >>> import pickle
+>>> import requests
 
 >>> documents = data.load_towns()
 
@@ -37,6 +41,7 @@ cd deploy-cherche
 
 >>> with open("model/model.pkl", "wb") as pkl_file:
 ...     pickle.dump(search, pkl_file)
+
 ```
 
 ### Build
@@ -48,45 +53,45 @@ docker run -d --name container -p 80:80 cherche
 
 ### Query
 
-```sh
-curl 
-```
-
-## Elasticsearch
-
-To deploy an API with an Elastic retriever, you will need to use a dedicated container.
+Search using curl:
 
 ```sh
-docker run --name es01 --net elastic -p 9200:9200 -p 9300:9300 -it docker.elastic.co/elasticsearch/elasticsearch:8.0.0
+curl "http://127.0.0.1:80/search/?q=Bordeaux"
 ```
+
+Search using python:
 
 ```python
->>> from cherche import retrieve, rank, data
->>> from sentence_transformers import SentenceTransformer
+>>> import requests
+>>> import urllib
+>>> q = "Bordeaux"
+>>> r = requests.get(f"http://127.0.0.1:80/search/?q={urllib.parse.quote(q)}")
+>>> r.json()
+```
+
+### Update
+
+We can update the neural search pipeline via the `upload` route. The `upload` route will overwrite
+the `model/model.pkl` pickle file. You can also create a new container with a new model inside
+`model/model.pkl`.
+
+```python
+>>> import requests
 >>> import pickle
+>>> from cherche import data, retrieve
 
 >>> documents = data.load_towns()
 
->>> retriever = retrieve.Elastic(key="id", on=["article", "title"], documents=documents, k=30)
+>>> search = retrieve.TfIdf(key="id", on=["article", "title"], documents=documents, k=30)
 
->>> ranker = rank.Encoder(
-...       key = "id",
-...       on = ["title", "article"],
-...       encoder = SentenceTransformer("sentence-transformers/all-mpnet-base-v2").encode, # device = "cuda"
-...       k = 10,
-... )
-
->>> search = retriever + ranker + documents
->>> search.add_embeddings(documents)
-
-
->>> with open("model/model.pkl", "wb") as pkl_file:
-...     pickle.dump(search, pkl_file)
+>>> requests.post("http://127.0.0.1:80/upload/", files={"model": pickle.dumps(search)})
 ```
 
 ## Utils
 
-We might want to systematically start the API when the machine hosting the container reboots. To
+### Restart
+
+We might want to systematically start the API when the computer hosting the container reboots. To
 do so, we need enable docker a startup and use `--restart always` option.
 
 ```sh
@@ -95,13 +100,19 @@ systemctl enable docker
 
 ```sh
 docker build -t cherche .
-docker run -d --restart always --name container -p 80:80 cherche
+docker run -d --restart unless-stopped --name container -p 80:80 cherche
 ```
 
-## Debug
+### Elasticsearch
+
+To use the Elasticsearch retriever, the official documentation provides information to start an
+independent and dedicated process [here](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html).
+
+### Debug
 
 You can run the api locally to debug it or to modify it using:
 
 ```sh
+pip install -r requirements.txt
 uvicorn app:app --reload -p 80:80 
 ```

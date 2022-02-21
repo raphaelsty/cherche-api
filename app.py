@@ -1,19 +1,18 @@
 import os
-import pathlib
 import pickle
 
 from cherche import compose
-from fastapi import FastAPI
+from fastapi import FastAPI, File, HTTPException
 from pydantic import BaseModel
 
 
 class Pipeline:
     """Neural search pipeline."""
 
-    def __init__(self) -> None:
-        self.model = None
+    def __init__(self, model=None) -> None:
+        self.model = model
 
-    def set(self, model: compose.Pipeline) -> "Pipeline":
+    def set(self, model) -> "Pipeline":
         self.model = model
         return self
 
@@ -22,9 +21,6 @@ class Pipeline:
 
     def __call__(self, q: str) -> list:
         return self.model(q=q)
-
-
-pipeline = Pipeline()
 
 
 class ModelNotFound(Exception):
@@ -58,28 +54,51 @@ app = FastAPI(
     version="0.0.1",
 )
 
+pipeline = Pipeline()
+
+
+def _load_model():
+    """Load the neural search pipeline."""
+    if not os.path.isfile("model/model.pkl"):
+        return None
+    try:
+        with open("model/model.pkl", "rb") as input_model:
+            model = pickle.load(input_model)
+    except:
+        return None
+
+    return pipeline.set(model=model)
+
 
 @app.get("/search/", tags=["search"])
 def search(q: str):
-    raise ValueError(pipeline, q)
-    return pipeline(q=q)
+    if pipeline.get() is None:
+        _load_model()
+        if pipeline.get() is None:
+            raise HTTPException(status_code=503, detail="Neural search pipeline not found.")
+
+    documents = pipeline(q=q)
+    for document in documents:
+        document["similarity"] = document["similarity"].astype(float)
+
+    return documents
+
+
+@app.post("/upload/", tags=["upload"])
+def upload(model: bytes = File(...)):
+    import os
+
+    print(os.listdir("./"))
+    with open("model/model.pkl", "wb") as f:
+        f.write(model)
+    _load_model()
+    return {"Neural search pipeline uploaded."}
 
 
 @app.on_event("startup")
 def load_model():
     """Load the model when starting the API."""
-    path_model = [
-        file for file in os.listdir("model") if file.endswith(".pkl") or file.endswith(".pickle")
-    ]
+    import os
 
-    if not path_model:
-        raise ModelNotFound(
-            "Model not found, you need to dump a Cherche pipeline inside the folder model with the extension .pkl or .pickle"
-        )
-    else:
-        path_model = os.path.join("model", path_model[0])
-
-    with open(path_model, "rb") as input_model:
-        model = pickle.load(input_model)
-
-    return pipeline.set(model=model)
+    print(os.listdir("./"))
+    return _load_model()

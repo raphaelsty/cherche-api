@@ -3,7 +3,6 @@ import pickle
 
 from cherche import compose
 from fastapi import FastAPI, File, HTTPException
-from pydantic import BaseModel
 
 
 class Pipeline:
@@ -21,17 +20,6 @@ class Pipeline:
 
     def __call__(self, q: str) -> list:
         return self.model(q=q)
-
-
-class ModelNotFound(Exception):
-    pass
-
-
-class Model(BaseModel):
-    model: compose.Pipeline
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 app = FastAPI(

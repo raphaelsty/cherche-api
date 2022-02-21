@@ -105,6 +105,10 @@ docker build -t cherche .
 docker run -d --restart unless-stopped --name container -p 80:80 cherche
 ```
 
+### FastAPI - Dockerfile
+
+You may need to configure the `Dockerfile` differently to suit your needs based on the documentation provided by [FastAPI](https://fastapi.tiangolo.com/deployment/docker/).
+
 ### Elasticsearch
 
 To use the Elasticsearch retriever, the official documentation provides information to start an

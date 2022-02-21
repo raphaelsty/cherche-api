@@ -1,7 +1,9 @@
 # Deploy-Cherche
 
-`deploy-search` is dedicated to deploying our neural search pipeline using
-[Docker](https://docs.docker.com/get-docker/) and [FastAPI](https://fastapi.tiangolo.com).
+`deploy-search` is dedicated to deploying our neural search pipeline using [FastAPI](https://fastapi.tiangolo.com) and
+[Docker](https://docs.docker.com/get-docker/). The `deploy-search` API has two routes: `/search/`
+which enables the neural search pipeline to be called and an `/upload/` route which allows to
+update the pipeline and or the set of indexed documents.
 
 ## Quick Start
 
@@ -51,7 +53,7 @@ docker build -t cherche .
 docker run -d --name container -p 80:80 cherche
 ```
 
-### Query
+### Search
 
 Search using curl:
 

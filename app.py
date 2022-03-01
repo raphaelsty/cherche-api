@@ -67,7 +67,8 @@ def search(q: str):
 
     documents = pipeline(q=q)
     for document in documents:
-        document["similarity"] = document["similarity"].astype(float)
+        if "similarity" in document:
+            document["similarity"] = document["similarity"].astype(float)
 
     return documents
 

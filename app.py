@@ -25,10 +25,6 @@ class Pipeline:
 app = FastAPI(
     openapi_tags=[
         {
-            "name": "view",
-            "description": "View your neural search pipeline.",
-        },
-        {
             "name": "search",
             "description": "Search for a document.",
         },
@@ -65,19 +61,11 @@ def search(q: str):
         if pipeline.get() is None:
             raise HTTPException(status_code=503, detail="Neural search pipeline not found.")
 
-    documents = pipeline(q=q)
-    for document in documents:
-        if "similarity" in document:
-            document["similarity"] = document["similarity"].astype(float)
-
-    return documents
+    return pipeline(q=q)
 
 
 @app.post("/upload/", tags=["upload"])
 def upload(model: bytes = File(...)):
-    import os
-
-    print(os.listdir("./"))
     with open("model/model.pkl", "wb") as f:
         f.write(model)
     _load_model()
@@ -87,7 +75,4 @@ def upload(model: bytes = File(...)):
 @app.on_event("startup")
 def load_model():
     """Load the model when starting the API."""
-    import os
-
-    print(os.listdir("./"))
     return _load_model()

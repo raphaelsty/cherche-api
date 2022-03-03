@@ -1,4 +1,4 @@
-cherche == 0.0.5
+cherche == 0.0.6
 fastapi == 0.74.0
 pydantic == 1.9.0
 python-multipart == 0.0.5
